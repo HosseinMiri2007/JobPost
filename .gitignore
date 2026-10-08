@@ -1,0 +1,24 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+coverage/
+next-env.d.ts
+*.tsbuildinfo
+
+# Env و اسرار
+.env
+.env.*
+!.env.example
+
+# لاگ‌ها و متفرقه
+*.log
+.DS_Store
+*.pem
+.vercel
