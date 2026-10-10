@@ -70,7 +70,10 @@ export type JobContextTypes = {
   setUserjobs?: Dispatch<SetStateAction<JobType[]>>;
   getCandidatesForJob?: (id: string) => Promise<void>;
   addJob?: (credintianls: AddJobType) => Promise<void>;
-  deletejob?: (id: string) => Promise<void>;
-  updatejob?: (id: string, credintianls: AddJobType) => Promise<void>;
+  deletejob?: (id: number | undefined) => Promise<void>;
+  updatejob?: (
+    id: number | undefined,
+    credintianls: AddJobType,
+  ) => Promise<void>;
   loading?: boolean;
 };

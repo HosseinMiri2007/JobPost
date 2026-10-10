@@ -28,7 +28,7 @@ export async function POST(
     }
 
     const res = await axios.post(
-      `${process.env.API_URL}/api/job/apply/${id}`,
+      `${process.env.API_URL}/api/job/apply/${id}/`,
       {},
       {
         headers: {

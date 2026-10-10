@@ -113,7 +113,7 @@ export default function JobContextProvider({
       const req = await axios.get("/api/job/currentuserjobs/");
       if (req.data) {
         setUserjobs(req.data);
-        setLoading(false)
+        setLoading(false);
       }
     } catch (error) {
       setLoading(false);
@@ -159,16 +159,12 @@ export default function JobContextProvider({
     }
   }
 
-
-  
-
-
-  async function deletejob(id: string) {
+  async function deletejob(id: number | undefined) {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await axios.post(`/api/job/del/`, id);
+      const response = await axios.delete(`/api/job/del/${id}`);
 
       if (response.status === 200 || response.status === 201) {
         toast.success("✅ آگهی استخدام با موفقیت ثبت شد!");
@@ -198,7 +194,7 @@ export default function JobContextProvider({
     }
   }
 
-  async function updatejob(id: string, jobData: AddJobType) {}
+  async function updatejob(id: number | undefined, jobData: AddJobType) {}
   return (
     <JobContext.Provider
       value={{

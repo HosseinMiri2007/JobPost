@@ -26,9 +26,8 @@ export async function DELETE(
       );
     }
 
-    const res = await axios.post(
-      `${process.env.API_URL}/api/job/delete/${id}`,
-      {},
+    const res = await axios.delete(
+      `${process.env.API_URL}/api/job/delete/${id}/`,
       {
         headers: {
           Authorization: `Bearer ${access}`,

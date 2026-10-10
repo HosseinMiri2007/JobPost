@@ -1,6 +1,7 @@
 // frontend/app/auth/dashboard/page.tsx
 "use client";
 import { useJob } from "@/context/JobContext";
+import { Eye, Pencil, Trash } from "lucide-react";
 import { stringify } from "querystring";
 import { useEffect, useState } from "react";
 
@@ -11,6 +12,7 @@ export default function UserDashboard() {
     loading,
     getCurrentUserJobs,
     userjobs,
+    deletejob,
   } = useJob();
   const [isLoading, setIsLoading] = useState(true);
   const [usersjob, getUsersJob] = useState(null);
@@ -34,6 +36,12 @@ export default function UserDashboard() {
     fetchJobs();
   }, []);
 
+  async function handleDelete(id: number | undefined) {
+    if (id === undefined || !deletejob) return;
+
+    await deletejob(id);
+    await getCurrentUserJobs?.();
+  }
   // Debug: Log when jobsApplied changes
   useEffect(() => {
     console.log("🟢 jobsApplied updated:", jobsApplied);
@@ -91,6 +99,7 @@ export default function UserDashboard() {
                   <th className="p-2 text-right">حقوق</th>
                   <th className="p-2 text-right">صنعت</th>
                   <th className="p-2 text-right">تجربه</th>
+                  <th className="p-2 text-right">عملیات ها</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,6 +115,20 @@ export default function UserDashboard() {
                       <td className="p-2">{item.salary || "—"}</td>
                       <td className="p-2">{item.industry || "—"}</td>
                       <td className="p-2">{item.experience || "—"}</td>
+                      <td className="p-2">
+                        <button
+                          className="px-2 py-1 rounded"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          <Trash />
+                        </button>
+                        <button className="px-2 py-1 rounded">
+                          <Pencil />
+                        </button>
+                        <button className="px-2 py-1 rounded">
+                          <Eye />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (

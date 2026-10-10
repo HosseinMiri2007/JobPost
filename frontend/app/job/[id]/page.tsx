@@ -101,12 +101,6 @@ export default async function JobDetail({
                     value={`${job.positions} نفر`}
                   />
 
-                  {/* <Info
-                    icon={<CalendarDays size={18} />}
-                    title="آخرین مهلت"
-                    value={new Date(job.last_date).toLocaleDateString("fa-IR")}
-                  /> */}
-
                   <Info
                     icon={<MapPin size={18} />}
                     title="موقعیت"
