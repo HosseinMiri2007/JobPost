@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from .filters import JobFilter
 from .models import Job, JobApplied
-from .serializers import JobAppliedSerializer, JobSerializer
+from .serializers import JobAppliedSerializer, JobSerializer,CandidateSerializer
 
 
 @api_view(["GET"])
@@ -54,36 +54,32 @@ def addjob(request):
         status=status.HTTP_400_BAD_REQUEST
     )
 
+
 @api_view(["PUT"])
 @permission_classes([IsAuthenticated])
 def updatejob(request, pk):
     job = get_object_or_404(Job, id=pk)
+
     if job.user != request.user:
         return Response(
-            {"message": "cant update this job"}, status=status.HTTP_403_FORBIDDEN
+            {"message": "cant update this job"},
+            status=status.HTTP_403_FORBIDDEN,
         )
 
-    job.title = request.data["title"]
-    job.description = request.data["description"]
-    job.salary = request.data["salary"]
-    job.email = request.data["email"]
-    job.address = request.data["address"]
-    job.positions = request.data["positions"]
-    job.company = request.data["company"]
-    job.created_at = request.data["created_at"]
-    job.last_date = request.data["last_date"]
-    job.location = request.data["location"]
-    job.user = request.data["user"]
-    job.jobtype = request.data["jobtype"]
-    job.education = request.data["education"]
-    job.industry = request.data["industry"]
-    job.experience = request.data["experience"]
+    serializer = JobSerializer(
+        job,
+        data=request.data,
+        context={"request": request},
+    )
 
-    job.save()
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    serializer = JobSerializer(job, many=False)
-
-    return Response(serializer.data)
+    return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST,
+    )
 
 
 @api_view(["DELETE"])
@@ -186,19 +182,14 @@ def getCurrentUserJobs(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def getCandidatesForJob(request, pk):
-
-    user = request.user
     job = get_object_or_404(Job, id=pk)
 
-    if job.user != user:
+    if job.user != request.user:
         return Response(
-            {"error": "You can not acces this job"}, status=status.HTTP_403_FORBIDDEN
+            {"error": "You can not access this job"},
+            status=status.HTTP_403_FORBIDDEN,
         )
 
-    appliedjobs = job.jobapply.all()
-
-    serializer = JobAppliedSerializer(appliedjobs, many=True)
-
+    applied = job.jobapply.select_related("user")
+    serializer = CandidateSerializer(applied, many=True)
     return Response(serializer.data)
-
- 

@@ -3,6 +3,7 @@
 import {
   AddJobType,
   JobAppliedType,
+  CandidateType,
   JobContextTypes,
   JobType,
 } from "@/types/job_types";
@@ -10,6 +11,7 @@ import axios from "axios";
 import { createContext, ReactNode, useContext, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { UserType } from "@/types/auth_types";
 
 const JobContext = createContext<JobContextTypes | null>(null);
 
@@ -24,6 +26,8 @@ export default function JobContextProvider({
   const [topicInfo, setTopicInfo] = useState<string>("");
   const [jobsApplied, setJobsApplied] = useState<JobAppliedType[]>([]);
   const [userjobs, setUserjobs] = useState<JobType[] | []>([]);
+  const [candidates, setcandidates] = useState<CandidateType[]>([]);
+
   const router = useRouter();
 
   async function applytojob(id: string) {
@@ -107,23 +111,38 @@ export default function JobContextProvider({
     }
   }
 
-  async function getCurrentUserJobs() {
+  async function getCurrentUserJobs(): Promise<JobType[]> {
     try {
       setLoading(true);
+      setError(null);
+
       const req = await axios.get("/api/job/currentuserjobs/");
-      if (req.data) {
-        setUserjobs(req.data);
-        setLoading(false);
-      }
+      const jobs: JobType[] = Array.isArray(req.data) ? req.data : [];
+
+      setUserjobs(jobs);
+      return jobs;
     } catch (error) {
-      setLoading(false);
       setError(error);
-      console.error("🔴 Error on getcurrentuserjob :", error);
+      console.error("Error getting current user jobs:", error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   }
 
-  async function getCandidatesForJob(id: string) {}
-  // ---- job crud
+  async function getCandidatesForJob(id: number | undefined) {
+    if (id === undefined) return;
+    try {
+      setcandidates([]);
+      setError(null);
+
+      const req = await axios.get(`/api/job/candidates/${id}`);
+      setcandidates(Array.isArray(req.data) ? req.data : []);
+    } catch (error) {
+      setError(error);
+      console.error("Error getting candidates:", error);
+    }
+  } // ---- job crud
 
   async function addJob(jobData: AddJobType): Promise<void> {
     try {
@@ -167,7 +186,7 @@ export default function JobContextProvider({
       const response = await axios.delete(`/api/job/del/${id}`);
 
       if (response.status === 200 || response.status === 201) {
-        toast.success("✅ آگهی استخدام با موفقیت ثبت شد!");
+        toast.success("✅ آگهی با موفقیت حذف شد!");
         console.log("✅ Job created successfully:", response.data);
 
         return response.data;
@@ -194,7 +213,52 @@ export default function JobContextProvider({
     }
   }
 
-  async function updatejob(id: number | undefined, jobData: AddJobType) {}
+  async function updatejob(
+    id: number | undefined,
+    jobData: AddJobType,
+  ): Promise<void> {
+    if (id === undefined) {
+      toast.error("شناسه آگهی معتبر نیست");
+      throw new Error("Job ID is required");
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.put(`/api/job/update/${id}/`, jobData);
+
+      setUserjobs((prev) =>
+        prev.map((job) => (job.id === id ? { ...job, ...response.data } : job)),
+      );
+
+      toast.success("آگهی استخدام با موفقیت ویرایش شد!");
+    } catch (error) {
+      setError(error);
+      console.error("Error updating job:", error);
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+
+        if (status === 401) {
+          toast.error("لطفاً وارد حساب کاربری خود شوید");
+        } else if (status === 403) {
+          toast.error("اجازه ویرایش این آگهی را ندارید");
+        } else if (status === 400) {
+          toast.error("اطلاعات ارسالی معتبر نیست");
+        } else {
+          toast.error(error.response?.data?.message || "خطا در ویرایش آگهی");
+        }
+      } else {
+        toast.error("خطای ناشناخته در ویرایش آگهی");
+      }
+
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <JobContext.Provider
       value={{
@@ -212,6 +276,8 @@ export default function JobContextProvider({
         userjobs,
         setUserjobs,
         getCandidatesForJob,
+        candidates,
+        setcandidates,
         addJob,
         deletejob,
         updatejob,

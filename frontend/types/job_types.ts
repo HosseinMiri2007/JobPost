@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
+import { UserType } from "./auth_types";
 
 type Industry =
   | "کسب و کار"
@@ -65,10 +66,12 @@ export type JobContextTypes = {
   jobsApplied?: JobAppliedType[];
   setJobsApplied?: Dispatch<SetStateAction<JobAppliedType[]>>;
   isApplied?: (id: string) => Promise<boolean | undefined>;
-  getCurrentUserJobs?: () => Promise<void>;
+  getCurrentUserJobs?: () => Promise<JobType[]>;
   userjobs?: JobType[] | [];
   setUserjobs?: Dispatch<SetStateAction<JobType[]>>;
-  getCandidatesForJob?: (id: string) => Promise<void>;
+  getCandidatesForJob?: (id: number | undefined) => Promise<void>;
+  candidates?: CandidateType[];
+  setcandidates?: Dispatch<SetStateAction<CandidateType[]>>;
   addJob?: (credintianls: AddJobType) => Promise<void>;
   deletejob?: (id: number | undefined) => Promise<void>;
   updatejob?: (
@@ -76,4 +79,13 @@ export type JobContextTypes = {
     credintianls: AddJobType,
   ) => Promise<void>;
   loading?: boolean;
+};
+
+export type CandidateType = {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  resume: string;
+  appliedAt: string;
 };

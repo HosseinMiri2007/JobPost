@@ -2,8 +2,16 @@
 "use client";
 import { useJob } from "@/context/JobContext";
 import { Eye, Pencil, Trash } from "lucide-react";
-import { stringify } from "querystring";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function UserDashboard() {
   const {
@@ -13,9 +21,29 @@ export default function UserDashboard() {
     getCurrentUserJobs,
     userjobs,
     deletejob,
+    getCandidatesForJob,
+    candidates,
   } = useJob();
   const [isLoading, setIsLoading] = useState(true);
-  const [usersjob, getUsersJob] = useState(null);
+
+  const handleDialogTriggerClick = useCallback(
+    (id: number | undefined) => {
+      if (id !== undefined && getCandidatesForJob) {
+        getCandidatesForJob(id);
+      }
+    },
+    [getCandidatesForJob],
+  );
+
+  const handleDelete = useCallback(
+    async (id: number | undefined) => {
+      if (id === undefined || !deletejob || !getCurrentUserJobs) return;
+      await deletejob(id);
+      await getCurrentUserJobs();
+    },
+    [deletejob, getCurrentUserJobs],
+  );
+
   useEffect(() => {
     async function fetchJobs() {
       try {
@@ -36,18 +64,12 @@ export default function UserDashboard() {
     fetchJobs();
   }, []);
 
-  async function handleDelete(id: number | undefined) {
-    if (id === undefined || !deletejob) return;
-
-    await deletejob(id);
-    await getCurrentUserJobs?.();
-  }
-  // Debug: Log when jobsApplied changes
   useEffect(() => {
+    // Debug: Log when jobsApplied changes
     console.log("🟢 jobsApplied updated:", jobsApplied);
   }, [jobsApplied]);
 
-  if (isLoading || loading) {
+  if (isLoading) {
     return <div className="p-6">در حال بارگذاری...</div>;
   }
 
@@ -115,19 +137,68 @@ export default function UserDashboard() {
                       <td className="p-2">{item.salary || "—"}</td>
                       <td className="p-2">{item.industry || "—"}</td>
                       <td className="p-2">{item.experience || "—"}</td>
-                      <td className="p-2">
+                      <td className="p-2 flex items-center">
                         <button
                           className="px-2 py-1 rounded"
                           onClick={() => handleDelete(item.id)}
                         >
                           <Trash />
                         </button>
-                        <button className="px-2 py-1 rounded">
+
+                        <Link
+                          href={`/job/update/${item.id}`}
+                          className="px-2 py-1 rounded"
+                        >
                           <Pencil />
-                        </button>
-                        <button className="px-2 py-1 rounded">
-                          <Eye />
-                        </button>
+                        </Link>
+
+                        <Dialog>
+                          <DialogTrigger
+                            className="px-2 py-1 rounded"
+                            onClick={() => handleDialogTriggerClick(item.id)}
+                          >
+                            <Eye />
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>داوطلبین شغل</DialogTitle>
+                              <DialogDescription className="sr-only">
+                                لیست افرادی که برای این شغل درخواست داده‌اند
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            {candidates && candidates.length > 0 ? (
+                              <ul className="space-y-2">
+                                {candidates.map((c, index) => (
+                                  <li
+                                    key={c.id}
+                                    className="flex items-center justify-between border-b pb-2"
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <span>{index}</span>
+                                      {c.first_name || c.last_name
+                                        ? `${c.first_name} ${c.last_name}`.trim()
+                                        : c.username}
+                                    </span>
+                                    <a
+                                      href={`${process.env.API_URL}/media/${c.resume}`}
+                                      download
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-3 py-1 rounded bg-blue-600 text-white text-sm"
+                                    >
+                                      دانلود رزومه
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-gray-500">
+                                هنوز کسی درخواست نداده است
+                              </p>
+                            )}
+                          </DialogContent>
+                        </Dialog>
                       </td>
                     </tr>
                   ))
